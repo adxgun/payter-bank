@@ -1,0 +1,14 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "internal/database/queries/sql"
+    schema: "migrations"
+    gen:
+      go:
+        package: "models"
+        out: "internal/database/models/"
+        emit_json_tags: true
+        emit_interface: true
+        overrides:
+          - db_type: numeric
+            go_type: float64
