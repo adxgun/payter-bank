@@ -1,3 +1,4 @@
+//go:generate mockgen -source=./models/querier.go -destination=./models/mocks/mock_querier.go -package=databasemocks
 package database
 
 import (
@@ -10,9 +11,10 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
-	"jolloy/internal/logger"
 	"os"
 	"path/filepath"
+	"payter-bank/internal/database/models"
+	"payter-bank/internal/logger"
 )
 
 func Open(ctx context.Context, dsn string) (*sql.DB, error) {
@@ -66,9 +68,30 @@ func runMigrations(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-func NullString(s string) sql.NullString {
-	return sql.NullString{
-		String: s,
-		Valid:  true,
+type Querier interface {
+	models.Querier
+	WithTx(tx *sql.Tx) Querier
+	DB() *sql.DB
+}
+
+type Queries struct {
+	*models.Queries
+	db *sql.DB
+}
+
+func (q *Queries) WithTx(tx *sql.Tx) Querier {
+	return &Queries{
+		Queries: q.Queries.WithTx(tx),
+	}
+}
+
+func (q *Queries) DB() *sql.DB {
+	return q.db
+}
+
+func NewQuerier(q *models.Queries, db *sql.DB) Querier {
+	return &Queries{
+		Queries: q,
+		db:      db,
 	}
 }
