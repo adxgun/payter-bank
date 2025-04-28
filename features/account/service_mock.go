@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -40,6 +41,94 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// ActivateAccount mocks base method.
+func (m *MockService) ActivateAccount(ctx context.Context, param OperationParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ActivateAccount", ctx, param)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ActivateAccount indicates an expected call of ActivateAccount.
+func (mr *MockServiceMockRecorder) ActivateAccount(ctx, param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ActivateAccount", reflect.TypeOf((*MockService)(nil).ActivateAccount), ctx, param)
+}
+
+// AuthenticateAccount mocks base method.
+func (m *MockService) AuthenticateAccount(ctx context.Context, param AuthenticateAccountParams) (AccessToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AuthenticateAccount", ctx, param)
+	ret0, _ := ret[0].(AccessToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AuthenticateAccount indicates an expected call of AuthenticateAccount.
+func (mr *MockServiceMockRecorder) AuthenticateAccount(ctx, param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthenticateAccount", reflect.TypeOf((*MockService)(nil).AuthenticateAccount), ctx, param)
+}
+
+// CloseAccount mocks base method.
+func (m *MockService) CloseAccount(ctx context.Context, param OperationParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CloseAccount", ctx, param)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CloseAccount indicates an expected call of CloseAccount.
+func (mr *MockServiceMockRecorder) CloseAccount(ctx, param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CloseAccount", reflect.TypeOf((*MockService)(nil).CloseAccount), ctx, param)
+}
+
+// CreateAccount mocks base method.
+func (m *MockService) CreateAccount(ctx context.Context, param CreateAccountParams) (Profile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAccount", ctx, param)
+	ret0, _ := ret[0].(Profile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateAccount indicates an expected call of CreateAccount.
+func (mr *MockServiceMockRecorder) CreateAccount(ctx, param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccount", reflect.TypeOf((*MockService)(nil).CreateAccount), ctx, param)
+}
+
+// GetAccountStatusHistory mocks base method.
+func (m *MockService) GetAccountStatusHistory(ctx context.Context, accountID uuid.UUID) ([]ChangeHistory, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountStatusHistory", ctx, accountID)
+	ret0, _ := ret[0].([]ChangeHistory)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountStatusHistory indicates an expected call of GetAccountStatusHistory.
+func (mr *MockServiceMockRecorder) GetAccountStatusHistory(ctx, accountID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountStatusHistory", reflect.TypeOf((*MockService)(nil).GetAccountStatusHistory), ctx, accountID)
+}
+
+// GetProfile mocks base method.
+func (m *MockService) GetProfile(ctx context.Context, userID uuid.UUID) (Profile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProfile", ctx, userID)
+	ret0, _ := ret[0].(Profile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProfile indicates an expected call of GetProfile.
+func (mr *MockServiceMockRecorder) GetProfile(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfile", reflect.TypeOf((*MockService)(nil).GetProfile), ctx, userID)
+}
+
 // InitialiseAdmin mocks base method.
 func (m *MockService) InitialiseAdmin(ctx context.Context, email, password string) error {
 	m.ctrl.T.Helper()
@@ -52,4 +141,18 @@ func (m *MockService) InitialiseAdmin(ctx context.Context, email, password strin
 func (mr *MockServiceMockRecorder) InitialiseAdmin(ctx, email, password any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitialiseAdmin", reflect.TypeOf((*MockService)(nil).InitialiseAdmin), ctx, email, password)
+}
+
+// SuspendAccount mocks base method.
+func (m *MockService) SuspendAccount(ctx context.Context, param OperationParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SuspendAccount", ctx, param)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SuspendAccount indicates an expected call of SuspendAccount.
+func (mr *MockServiceMockRecorder) SuspendAccount(ctx, param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SuspendAccount", reflect.TypeOf((*MockService)(nil).SuspendAccount), ctx, param)
 }
