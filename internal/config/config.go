@@ -19,9 +19,10 @@ type ServerConfig struct {
 }
 
 type AppConfig struct {
-	AdminEmail    string `env:"ADMIN_EMAIL, default=admin@payterbank.app"`
-	AdminPassword string `env:"ADMIN_PASSWORD, default=admin"`
-	Environment   string `env:"ENVIRONMENT, default=dev"`
+	AdminEmail       string `env:"ADMIN_EMAIL, default=admin@payterbank.app"`
+	AdminPassword    string `env:"ADMIN_PASSWORD, default=admin"`
+	Environment      string `env:"ENVIRONMENT, default=dev"`
+	QueueConcurrency int    `env:"QUEUE_CONCURRENCY, default=10"`
 }
 
 type JWTConfig struct {
