@@ -1,0 +1,788 @@
+basePath: /docs
+definitions:
+  account.AccessToken:
+    properties:
+      token:
+        type: string
+    type: object
+  account.AuthenticateAccountParams:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  account.ChangeHistory:
+    properties:
+      account_id:
+        type: string
+      action:
+        type: string
+      action_by:
+        type: string
+      created_at:
+        type: string
+      current_status:
+        type: string
+      new_status:
+        type: string
+      old_status:
+        type: string
+    type: object
+  account.CreateAccountParams:
+    properties:
+      currency:
+        enum:
+        - GBP
+        - EUR
+        - JPY
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      initial_deposit:
+        type: number
+      last_name:
+        type: string
+      password:
+        type: string
+      user_type:
+        enum:
+        - CUSTOMER
+        - ADMIN
+        type: string
+      userID:
+        type: string
+    required:
+    - currency
+    - email
+    - first_name
+    - last_name
+    - password
+    - user_type
+    type: object
+  account.Profile:
+    properties:
+      account_id:
+        type: string
+      account_type:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      registered_at:
+        type: string
+      user_id:
+        type: string
+      user_type:
+        type: string
+    type: object
+  api.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  api.SuccessResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
+  interestrate.CreateInterestRateParam:
+    properties:
+      calculation_frequency:
+        enum:
+        - hourly
+        - daily
+        - weekly
+        - monthly
+        - yearly
+        type: string
+      rate:
+        type: number
+      userID:
+        type: string
+    required:
+    - calculation_frequency
+    - rate
+    type: object
+  interestrate.Response:
+    properties:
+      interest_rate_id:
+        type: string
+    type: object
+  interestrate.UpdateCalculationFrequencyParam:
+    properties:
+      calculation_frequency:
+        enum:
+        - hourly
+        - daily
+        - weekly
+        - monthly
+        - yearly
+        type: string
+      userID:
+        type: string
+    required:
+    - calculation_frequency
+    type: object
+  interestrate.UpdateRateParam:
+    properties:
+      rate:
+        minimum: 0
+        type: number
+      userID:
+        type: string
+    required:
+    - rate
+    type: object
+  transaction.AccountTransactionParams:
+    properties:
+      amount:
+        type: number
+      from_account_id:
+        type: string
+      narration:
+        type: string
+      to_account_id:
+        type: string
+      userID:
+        type: string
+    required:
+    - amount
+    type: object
+  transaction.Amount:
+    properties:
+      amount:
+        type: number
+      currency:
+        type: string
+    type: object
+  transaction.Balance:
+    properties:
+      account_id:
+        type: string
+      account_number:
+        type: string
+      account_type:
+        type: string
+      balance:
+        type: number
+      currency:
+        type: string
+    type: object
+  transaction.Response:
+    properties:
+      transaction_id:
+        type: string
+    type: object
+  transaction.Transaction:
+    properties:
+      amount:
+        $ref: '#/definitions/transaction.Amount'
+      created_at:
+        type: string
+      currency:
+        type: string
+      description:
+        type: string
+      from_account_id:
+        type: string
+      reference_number:
+        type: string
+      status:
+        type: string
+      to_account_id:
+        type: string
+      transaction_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:2025
+info:
+  contact:
+    email: support@payterbank.app
+    name: API Support
+    url: support@payterbank.app
+  description: REST API powering a payter banking platform.
+  termsOfService: http://swagger.io/terms/
+  title: PayterBank API
+  version: "1.0"
+paths:
+  /v1/api/accounts:
+    post:
+      consumes:
+      - application/json
+      description: Create a new CUSTOMER or ADMIN account
+      parameters:
+      - description: Create account params
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/account.CreateAccountParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/account.Profile'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Create account
+      tags:
+      - accounts
+  /v1/api/accounts/:id/activate:
+    patch:
+      consumes:
+      - application/json
+      description: Activate an account - this will set the account status to ACTIVE
+        and this can only be done by an admin
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Activate account
+      tags:
+      - accounts
+  /v1/api/accounts/:id/balance:
+    get:
+      consumes:
+      - application/json
+      description: Get account balance for the specified account.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/transaction.Balance'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get account balance.
+      tags:
+      - transactions
+  /v1/api/accounts/:id/close:
+    patch:
+      consumes:
+      - application/json
+      description: Close an account - this will set the account status to CLOSED and
+        this can only be done by an admin
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Close account
+      tags:
+      - accounts
+  /v1/api/accounts/:id/status-history:
+    get:
+      consumes:
+      - application/json
+      description: return the audit history of the account status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/account.ChangeHistory'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get account status history
+      tags:
+      - accounts
+  /v1/api/accounts/:id/suspend:
+    patch:
+      consumes:
+      - application/json
+      description: Suspend an account - this will set the account status to SUSPENDED
+        and this can only be done by an admin
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Suspend account
+      tags:
+      - accounts
+  /v1/api/accounts/:id/transactions:
+    get:
+      consumes:
+      - application/json
+      description: Get account transaction history.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/transaction.Transaction'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get account transaction history.
+      tags:
+      - transactions
+  /v1/api/accounts/authenticate:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate an account using email and password
+      parameters:
+      - description: authenticate account params
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/account.AuthenticateAccountParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/account.AccessToken'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Authenticate account
+      tags:
+      - accounts
+  /v1/api/credit:
+    post:
+      consumes:
+      - application/json
+      description: Credit an account with a specific amount - this endpoint can only
+        be used by the admin. The originating account will be assumed to be an external
+        account.
+      parameters:
+      - description: credit transaction params
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/transaction.AccountTransactionParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/transaction.Response'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Credit an account
+      tags:
+      - transactions
+  /v1/api/debit:
+    post:
+      consumes:
+      - application/json
+      description: Debit an account with a specific amount - this endpoint can only
+        be used by the admin. The destination account will be assumed to be an external
+        account.
+      parameters:
+      - description: account transaction params
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/transaction.AccountTransactionParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/transaction.Response'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Debit an account
+      tags:
+      - transactions
+  /v1/api/interest-rate:
+    post:
+      consumes:
+      - application/json
+      description: Create a new interest rate
+      parameters:
+      - description: Create interest rate params
+        in: body
+        name: interest_rate
+        required: true
+        schema:
+          $ref: '#/definitions/interestrate.CreateInterestRateParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/interestrate.Response'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Create interest rate
+      tags:
+      - interest-rate
+    put:
+      consumes:
+      - application/json
+      description: Update an existing interest rate
+      parameters:
+      - description: Update interest rate params
+        in: body
+        name: interest_rate
+        required: true
+        schema:
+          $ref: '#/definitions/interestrate.UpdateRateParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/interestrate.Response'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Update interest rate
+      tags:
+      - interest-rate
+  /v1/api/interest-rate/calculation-frequency:
+    put:
+      consumes:
+      - application/json
+      description: Update the calculation frequency of an existing interest rate
+      parameters:
+      - description: Update calculation frequency params
+        in: body
+        name: calculation_frequency
+        required: true
+        schema:
+          $ref: '#/definitions/interestrate.UpdateCalculationFrequencyParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/interestrate.Response'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Update calculation frequency
+      tags:
+      - interest-rate
+  /v1/api/interest-rate/current:
+    get:
+      consumes:
+      - application/json
+      description: Get the current interest rate
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/interestrate.Response'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get current interest rate
+      tags:
+      - interest-rate
+  /v1/api/me:
+    get:
+      consumes:
+      - application/json
+      description: return the current authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/account.Profile'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get current user
+      tags:
+      - accounts
+  /v1/api/transfer:
+    post:
+      consumes:
+      - application/json
+      description: Transfer from one account to another account.
+      parameters:
+      - description: credit account params
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/transaction.AccountTransactionParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/transaction.Response'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Transfer from one account to account.
+      tags:
+      - transactions
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
