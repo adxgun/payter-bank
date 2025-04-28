@@ -1,0 +1,38 @@
+version: "3"
+
+services:
+  database:
+    image: postgres:17.4
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Sj6AR5rHTLCCJMgkJ66Rxgwh6hAkuRyXHYrr
+      POSTGRES_DB: payterbank
+      PGDATA: /var/lib/postgresql/payterbank/data/db
+      POSTGRES_EXTENSIONS: uuid-ossp
+      POSTGRES_PORT: 5432
+    volumes:
+      - "${HOME}/mnt/payterbank/data:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis:7.2
+    restart: on-failure
+    ports:
+      - "6379:6379"
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    depends_on:
+      - database
+      - redis
+    environment:
+      DB_DSN: postgres://postgres:Sj6AR5rHTLCCJMgkJ66Rxgwh6hAkuRyXHYrr@database:5432/payterbank?sslmode=disable
+      REDIS_ADDR: redis://redis:6379
+      JWT_SECRET: 4e1c0f3a-7b8d-4f2b-8c3d-1a5e0f3a7b8d
+      JWT_EXPIRY: 48h
+      PORT: 2025
+    ports:
+      - "2025:2025"
