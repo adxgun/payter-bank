@@ -6,19 +6,25 @@ import (
 	"context"
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
-	"payter-bank/config"
-	"payter-bank/features/account"
+	"github.com/google/uuid"
+	"payter-bank/internal/config"
 	"time"
 )
 
 // TokenGenerator is an interface for generating and validating JWT tokens.
 type TokenGenerator interface {
-	Generate(profile account.Profile) (string, error)
-	Validate(token string) (account.Profile, error)
+	Generate(data TokenData) (string, error)
+	Validate(token string) (TokenData, error)
+}
+
+type TokenData struct {
+	UserID    uuid.UUID
+	AccountID uuid.UUID
+	ExpiresAt time.Time
 }
 
 type Claim struct {
-	account.Profile
+	TokenData
 	jwt.RegisteredClaims
 }
 
@@ -36,12 +42,12 @@ func NewTokenGenerator(cfg config.JWTConfig) TokenGenerator {
 	}
 }
 
-func (g *tokenGenerator) Generate(p account.Profile) (string, error) {
+func (g *tokenGenerator) Generate(data TokenData) (string, error) {
 	claims := &Claim{
-		Profile: p,
+		TokenData: data,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    g.cfg.Issuer,
-			Subject:   p.UserID.String(),
+			Subject:   data.UserID.String(),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(g.cfg.Expiry)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Audience:  []string{g.cfg.Audience},
@@ -51,21 +57,26 @@ func (g *tokenGenerator) Generate(p account.Profile) (string, error) {
 	return token.SignedString([]byte(g.cfg.Secret))
 }
 
-func (g *tokenGenerator) Validate(token string) (account.Profile, error) {
-	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+func (g *tokenGenerator) Validate(tk string) (TokenData, error) {
+	parsedToken, err := jwt.Parse(tk, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
 		}
 		return []byte(g.cfg.Secret), nil
 	})
 	if err != nil {
-		return account.Profile{}, err
+		return TokenData{}, err
 	}
 
 	claims, ok := parsedToken.Claims.(Claim)
 	if !ok || !parsedToken.Valid {
-		return account.Profile{}, errors.New("invalid token")
+		return TokenData{}, errors.New("invalid token")
 	}
 
-	return claims.Profile, nil
+	data := claims.TokenData
+	return TokenData{
+		UserID:    data.UserID,
+		AccountID: data.AccountID,
+		ExpiresAt: data.ExpiresAt,
+	}, nil
 }
