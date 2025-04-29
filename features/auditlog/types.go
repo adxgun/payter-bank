@@ -1,6 +1,10 @@
 package auditlog
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"payter-bank/internal/database/models"
+	"time"
+)
 
 type Event struct {
 	Action    Action    `json:"action"`
@@ -45,4 +49,38 @@ type InterestRateChangeMetadata struct {
 	OldCalculationFrequency string `json:"old_calculation_frequency"`
 	NewRate                 int64  `json:"new_rate"`
 	NewCalculationFrequency string `json:"new_calculation_frequency"`
+}
+
+type AuditLog struct {
+	AccountID     uuid.UUID   `json:"account_id"`
+	CurrentStatus string      `json:"current_status"`
+	ActionCode    string      `json:"action_code"`
+	Action        interface{} `json:"action"`
+	OldStatus     string      `json:"old_status"`
+	NewStatus     string      `json:"new_status"`
+	Amount        Amount      `json:"amount"`
+	ActionBy      interface{} `json:"action_by"`
+	CreatedAt     time.Time   `json:"created_at"`
+}
+
+type Amount struct {
+	Amount   float64 `json:"amount"`
+	Currency string  `json:"currency"`
+}
+
+func AuditLogFromRow(row models.GetAuditLogsForAccountRow) AuditLog {
+	return AuditLog{
+		AccountID:     row.AccountID,
+		CurrentStatus: string(row.CurrentStatus),
+		ActionCode:    row.ActionCode,
+		Action:        row.Action,
+		OldStatus:     row.OldStatus,
+		NewStatus:     row.NewStatus,
+		Amount: Amount{
+			Amount:   float64(row.Amount / 100),
+			Currency: row.Currency,
+		},
+		ActionBy:  row.ActionBy,
+		CreatedAt: row.CreatedAt.Time,
+	}
 }

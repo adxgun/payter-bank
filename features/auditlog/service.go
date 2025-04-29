@@ -14,6 +14,10 @@ import (
 	"payter-bank/internal/logger"
 )
 
+type Query interface {
+	GetAuditLogs(ctx context.Context, accountID uuid.UUID) ([]AuditLog, error)
+}
+
 type Service interface {
 	Submit(ctx context.Context, event Event) error
 	Start(ctx context.Context) error
@@ -33,6 +37,20 @@ type service struct {
 	client Client
 	cfg    config.Config
 	db     models.Querier
+}
+
+func NewService(cfg config.Config, client Client, db models.Querier) Service {
+	return &service{
+		client: client,
+		db:     db,
+		cfg:    cfg,
+	}
+}
+
+func NewQueryService(db models.Querier) Query {
+	return &service{
+		db: db,
+	}
 }
 
 func (s *service) Start(ctx context.Context) error {
@@ -57,14 +75,6 @@ func (s *service) Start(ctx context.Context) error {
 			return nil
 		default:
 		}
-	}
-}
-
-func NewService(cfg config.Config, client Client, db models.Querier) Service {
-	return &service{
-		client: client,
-		db:     db,
-		cfg:    cfg,
 	}
 }
 
@@ -130,4 +140,20 @@ func (s *service) ProcessTask(ctx context.Context, task *asynq.Task) error {
 
 	logger.Info(ctx, "audit log saved successfully")
 	return nil
+}
+
+func (s *service) GetAuditLogs(ctx context.Context, accountID uuid.UUID) ([]AuditLog, error) {
+	data, err := s.db.GetAuditLogsForAccount(ctx, uuid.NullUUID{
+		UUID:  accountID,
+		Valid: accountID != uuid.Nil,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	logs := make([]AuditLog, 0, len(data))
+	for _, row := range data {
+		logs = append(logs, AuditLogFromRow(row))
+	}
+	return logs, nil
 }

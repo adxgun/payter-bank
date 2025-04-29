@@ -13,9 +13,49 @@ import (
 	context "context"
 	reflect "reflect"
 
+	uuid "github.com/google/uuid"
 	asynq "github.com/hibiken/asynq"
 	gomock "go.uber.org/mock/gomock"
 )
+
+// MockQuery is a mock of Query interface.
+type MockQuery struct {
+	ctrl     *gomock.Controller
+	recorder *MockQueryMockRecorder
+	isgomock struct{}
+}
+
+// MockQueryMockRecorder is the mock recorder for MockQuery.
+type MockQueryMockRecorder struct {
+	mock *MockQuery
+}
+
+// NewMockQuery creates a new mock instance.
+func NewMockQuery(ctrl *gomock.Controller) *MockQuery {
+	mock := &MockQuery{ctrl: ctrl}
+	mock.recorder = &MockQueryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockQuery) EXPECT() *MockQueryMockRecorder {
+	return m.recorder
+}
+
+// GetAuditLogs mocks base method.
+func (m *MockQuery) GetAuditLogs(ctx context.Context, accountID uuid.UUID) ([]AuditLog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAuditLogs", ctx, accountID)
+	ret0, _ := ret[0].([]AuditLog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAuditLogs indicates an expected call of GetAuditLogs.
+func (mr *MockQueryMockRecorder) GetAuditLogs(ctx, accountID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuditLogs", reflect.TypeOf((*MockQuery)(nil).GetAuditLogs), ctx, accountID)
+}
 
 // MockService is a mock of Service interface.
 type MockService struct {
