@@ -49,7 +49,7 @@ API documentation can be accessed via: http://localhost:2025/docs/index.html
 ## Implementation Notes
 
 ### Transaction Handling and Balance Calculation
-Each credit or debit is recorded as a single entry in the `Transaction` table, using `from_account_id` and `to_account_id` to indicate the sender and receiver, respectively.
+Each credit or debit is recorded as a single entry in the `transactions` table, using `from_account_id` and `to_account_id` to indicate the sender and receiver, respectively.
 
 #### Balance Calculation
 
