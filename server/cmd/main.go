@@ -64,10 +64,11 @@ func main() {
 	querier := models.New(db)
 	tokenGenerator := generator.NewTokenGenerator(cfg.JWT)
 	auditLogService := auditlog.NewService(cfg, auditLogClient, querier)
+	interestRateApplicationRunner := interestrate.NewRunner(querier, cfg.App)
 
 	transactionService := transaction.NewService(querier, auditLogService)
 	accountService := account.NewService(querier, auditLogService, transactionService, tokenGenerator)
-	interestService := interestrate.NewService(querier, cfg.App, auditLogService)
+	interestService := interestrate.NewService(querier, cfg.App, auditLogService, interestRateApplicationRunner)
 	auditLogQueryService := auditlog.NewQueryService(querier)
 
 	accountHandler := account.NewHandler(accountService)
@@ -88,7 +89,7 @@ func main() {
 	}()
 
 	go func() {
-		if err := interestService.Start(ctx); err != nil {
+		if err := interestRateApplicationRunner.Start(ctx); err != nil {
 			logger.Warn(ctx, "Error starting interest-rate calculation job", zap.Error(err))
 		}
 	}()

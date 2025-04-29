@@ -60,6 +60,10 @@ func TestService_CreateInterestRate(t *testing.T) {
 			Submit(gomock.Any(), expectedAuditEvent).
 			Return(nil)
 
+		mocker.runner.EXPECT().Start(gomock.Any()).
+			Return(nil).
+			Times(1)
+
 		response, err := mocker.service.CreateInterestRate(context.TODO(), param)
 
 		assert.NoError(t, err)
@@ -469,6 +473,9 @@ func TestService_UpdateRate(t *testing.T) {
 				Rate: 650, // 6.5%
 			}).
 			Return(nil)
+		mocker.runner.EXPECT().Start(gomock.Any()).
+			Return(nil).
+			Times(1)
 
 		expectedAuditEvent := auditlog.NewEvent(
 			auditlog.ActionInterestRateChange,
@@ -597,6 +604,10 @@ func TestService_UpdateCalculationFrequency(t *testing.T) {
 			Submit(gomock.Any(), expectedAuditEvent).
 			Return(nil)
 
+		mocker.runner.EXPECT().Start(gomock.Any()).
+			Return(nil).
+			Times(1)
+
 		response, err := mocker.service.UpdateCalculationFrequency(context.Background(), UpdateCalculationFrequencyParam{
 			UserID:               userID,
 			CalculationFrequency: "weekly",
@@ -700,6 +711,7 @@ func TestService_UpdateCalculationFrequency(t *testing.T) {
 type interestRateMocker struct {
 	db       *databasemocks.MockQuerier
 	auditLog *auditlog.MockService
+	runner   *MockRunner
 
 	service Service
 }
@@ -708,14 +720,16 @@ func newInterestRateMocker(t *testing.T) *interestRateMocker {
 	ctrl := gomock.NewController(t)
 	db := databasemocks.NewMockQuerier(ctrl)
 	auditLog := auditlog.NewMockService(ctrl)
+	runnerMock := NewMockRunner(ctrl)
 	cfg := config.AppConfig{
 		InterestRateAccountID: uuid.MustParse("00000000-0000-0000-0000-000000000000"),
 	}
 
-	svc := NewService(db, cfg, auditLog)
+	svc := NewService(db, cfg, auditLog, runnerMock)
 	return &interestRateMocker{
 		db:       db,
 		auditLog: auditLog,
 		service:  svc,
+		runner:   runnerMock,
 	}
 }

@@ -128,3 +128,41 @@ func (mr *MockServiceMockRecorder) UpdateRate(ctx, param any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRate", reflect.TypeOf((*MockService)(nil).UpdateRate), ctx, param)
 }
+
+// MockRunner is a mock of Runner interface.
+type MockRunner struct {
+	ctrl     *gomock.Controller
+	recorder *MockRunnerMockRecorder
+	isgomock struct{}
+}
+
+// MockRunnerMockRecorder is the mock recorder for MockRunner.
+type MockRunnerMockRecorder struct {
+	mock *MockRunner
+}
+
+// NewMockRunner creates a new mock instance.
+func NewMockRunner(ctrl *gomock.Controller) *MockRunner {
+	mock := &MockRunner{ctrl: ctrl}
+	mock.recorder = &MockRunnerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockRunner) EXPECT() *MockRunnerMockRecorder {
+	return m.recorder
+}
+
+// Start mocks base method.
+func (m *MockRunner) Start(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Start", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Start indicates an expected call of Start.
+func (mr *MockRunnerMockRecorder) Start(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockRunner)(nil).Start), ctx)
+}

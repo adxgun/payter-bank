@@ -10,13 +10,20 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"net/http"
+	"os"
+	"os/signal"
 	"payter-bank/features/auditlog"
 	"payter-bank/internal/config"
 	"payter-bank/internal/database/models"
 	platformerrors "payter-bank/internal/errors"
 	"payter-bank/internal/logger"
 	"payter-bank/internal/pkg/generator"
+	"syscall"
 	"time"
+)
+
+var (
+	interestRateApplicationJobID = uuid.MustParse("00000000-0000-0000-0000-000000000001")
 )
 
 type Service interface {
@@ -28,17 +35,30 @@ type Service interface {
 	Start(ctx context.Context) error
 }
 
+type Runner interface {
+	Start(ctx context.Context) error
+}
+
+func NewRunner(db models.Querier, cfg config.AppConfig) Runner {
+	return &service{
+		db:  db,
+		cfg: cfg,
+	}
+}
+
 type service struct {
 	db       models.Querier
 	auditLog auditlog.Service
 	cfg      config.AppConfig
+	runner   Runner
 }
 
-func NewService(db models.Querier, cfg config.AppConfig, auditLog auditlog.Service) Service {
+func NewService(db models.Querier, cfg config.AppConfig, auditLog auditlog.Service, runner Runner) Service {
 	return &service{
 		db:       db,
 		cfg:      cfg,
 		auditLog: auditLog,
+		runner:   runner,
 	}
 }
 
@@ -78,6 +98,9 @@ func (s *service) CreateInterestRate(ctx context.Context, param CreateInterestRa
 	if err != nil {
 		logger.Warn(ctx, "failed to submit audit log", zap.Error(err))
 	}
+
+	// restart the scheduler to apply the new rate
+	_ = s.runner.Start(ctx)
 	return &Response{InterestRateID: newRate.ID}, nil
 }
 
@@ -109,6 +132,9 @@ func (s *service) UpdateRate(ctx context.Context, param UpdateRateParam) (*Respo
 	if err != nil {
 		logger.Warn(ctx, "failed to submit audit log", zap.Error(err))
 	}
+
+	// restart the scheduler to apply the new rate
+	_ = s.runner.Start(ctx)
 	return &Response{InterestRateID: rate.ID}, nil
 }
 
@@ -143,6 +169,9 @@ func (s *service) UpdateCalculationFrequency(ctx context.Context, param UpdateCa
 	if err != nil {
 		logger.Warn(ctx, "failed to submit audit log", zap.Error(err))
 	}
+
+	// restart the scheduler to apply the new rate
+	_ = s.runner.Start(ctx)
 	return &Response{InterestRateID: rate.ID}, nil
 }
 
@@ -170,7 +199,7 @@ func (s *service) ApplyRates(ctx context.Context) error {
 		}
 
 		if balance.Balance > 0 {
-			gain := float64(balance.Balance) * (float64(rate.Rate/100) / 100)
+			gain := float64(balance.Balance) * (float64(rate.Rate) / 10000)
 			txn := models.SaveTransactionParams{
 				FromAccountID:   s.cfg.InterestRateAccountID,
 				ToAccountID:     account.AccountID,
@@ -211,6 +240,8 @@ func (s *service) GetCurrentRate(ctx context.Context) (*models.InterestRate, err
 }
 
 func (s *service) Start(ctx context.Context) error {
+	// create a context that will be cancelled when the application is shutting down
+	ctx, _ = signal.NotifyContext(ctx, os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGINT)
 	ctx = logger.With(ctx,
 		zap.String(logger.FunctionName, "Start"))
 
@@ -229,9 +260,15 @@ func (s *service) Start(ctx context.Context) error {
 		return err
 	}
 
+	err = scheduler.RemoveJob(interestRateApplicationJobID) // tries to remove the job if it exists
+	if err != nil {
+		logger.Warn(ctx, "failed to remove existing job", zap.Error(err))
+	}
+
 	job, err := scheduler.NewJob(
 		gocron.CronJob(cronExpression, false),
-		gocron.NewTask(s.ApplyRates, ctx))
+		gocron.NewTask(s.ApplyRates, ctx),
+		gocron.WithIdentifier(interestRateApplicationJobID))
 	if err != nil {
 		return err
 	}
