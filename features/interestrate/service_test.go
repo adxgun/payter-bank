@@ -9,6 +9,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"net/http"
 	"payter-bank/features/auditlog"
+	"payter-bank/internal/config"
 	"payter-bank/internal/database/models"
 	databasemocks "payter-bank/internal/database/models/mocks"
 	platformerrors "payter-bank/internal/errors"
@@ -707,8 +708,11 @@ func newInterestRateMocker(t *testing.T) *interestRateMocker {
 	ctrl := gomock.NewController(t)
 	db := databasemocks.NewMockQuerier(ctrl)
 	auditLog := auditlog.NewMockService(ctrl)
+	cfg := config.AppConfig{
+		InterestRateAccountID: uuid.MustParse("00000000-0000-0000-0000-000000000000"),
+	}
 
-	svc := NewService(db, auditLog)
+	svc := NewService(db, cfg, auditLog)
 	return &interestRateMocker{
 		db:       db,
 		auditLog: auditLog,

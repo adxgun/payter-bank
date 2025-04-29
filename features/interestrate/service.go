@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"payter-bank/features/auditlog"
+	"payter-bank/internal/config"
 	"payter-bank/internal/database/models"
 	platformerrors "payter-bank/internal/errors"
 	"payter-bank/internal/logger"
@@ -30,11 +31,13 @@ type Service interface {
 type service struct {
 	db       models.Querier
 	auditLog auditlog.Service
+	cfg      config.AppConfig
 }
 
-func NewService(db models.Querier, auditLog auditlog.Service) Service {
+func NewService(db models.Querier, cfg config.AppConfig, auditLog auditlog.Service) Service {
 	return &service{
 		db:       db,
+		cfg:      cfg,
 		auditLog: auditLog,
 	}
 }
@@ -169,7 +172,7 @@ func (s *service) ApplyRates(ctx context.Context) error {
 		if balance.Balance > 0 {
 			gain := float64(balance.Balance) * (float64(rate.Rate/100) / 100)
 			txn := models.SaveTransactionParams{
-				FromAccountID:   uuid.UUID{},
+				FromAccountID:   s.cfg.InterestRateAccountID,
 				ToAccountID:     account.AccountID,
 				Amount:          int64(gain),
 				ReferenceNumber: generator.DefaultNumberGenerator.Generate(),
