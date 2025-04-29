@@ -5,6 +5,36 @@ definitions:
       token:
         type: string
     type: object
+  account.Account:
+    properties:
+      account_id:
+        type: string
+      account_number:
+        type: string
+      account_type:
+        type: string
+      balance:
+        $ref: '#/definitions/account.Amount'
+      created_at:
+        type: string
+      currency:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: string
+    type: object
+  account.Amount:
+    properties:
+      amount:
+        type: number
+      currency:
+        type: string
+    type: object
   account.AuthenticateAccountParams:
     properties:
       email:
@@ -34,18 +64,28 @@ definitions:
     type: object
   account.CreateAccountParams:
     properties:
+      adminUserID:
+        type: string
       currency:
         enum:
         - GBP
         - EUR
         - JPY
         type: string
+      initial_deposit:
+        type: number
+      user_id:
+        type: string
+    required:
+    - currency
+    - user_id
+    type: object
+  account.CreateUserParams:
+    properties:
       email:
         type: string
       first_name:
         type: string
-      initial_deposit:
-        type: number
       last_name:
         type: string
       password:
@@ -55,15 +95,17 @@ definitions:
         - CUSTOMER
         - ADMIN
         type: string
-      userID:
-        type: string
     required:
-    - currency
     - email
     - first_name
     - last_name
     - password
     - user_type
+    type: object
+  account.CreateUserResponse:
+    properties:
+      user_id:
+        type: string
     type: object
   account.Profile:
     properties:
@@ -93,6 +135,32 @@ definitions:
     properties:
       data: {}
       message:
+        type: string
+    type: object
+  auditlog.Amount:
+    properties:
+      amount:
+        type: number
+      currency:
+        type: string
+    type: object
+  auditlog.AuditLog:
+    properties:
+      account_id:
+        type: string
+      action: {}
+      action_by: {}
+      action_code:
+        type: string
+      amount:
+        $ref: '#/definitions/auditlog.Amount'
+      created_at:
+        type: string
+      current_status:
+        type: string
+      new_status:
+        type: string
+      old_status:
         type: string
     type: object
   interestrate.CreateInterestRateParam:
@@ -142,6 +210,17 @@ definitions:
         type: string
     required:
     - rate
+    type: object
+  models.GetAccountStatsRow:
+    properties:
+      closed:
+        type: integer
+      suspended:
+        type: integer
+      total:
+        type: integer
+      total_users:
+        type: integer
     type: object
   transaction.AccountTransactionParams:
     properties:
@@ -218,6 +297,39 @@ info:
   version: "1.0"
 paths:
   /v1/api/accounts:
+    get:
+      consumes:
+      - application/json
+      description: Get all current accounts - admin only endpoint.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/account.Account'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get all current accounts
+      tags:
+      - accounts
     post:
       consumes:
       - application/json
@@ -254,6 +366,38 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
       summary: Create account
+      tags:
+      - accounts
+  /v1/api/accounts/:id:
+    get:
+      consumes:
+      - application/json
+      description: Get account details.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/account.Account'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get account details.
       tags:
       - accounts
   /v1/api/accounts/:id/activate:
@@ -342,6 +486,40 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
       summary: Close account
+      tags:
+      - accounts
+  /v1/api/accounts/:id/logs:
+    get:
+      consumes:
+      - application/json
+      description: Get account details.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/auditlog.AuditLog'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get account details.
       tags:
       - accounts
   /v1/api/accounts/:id/status-history:
@@ -440,18 +618,11 @@ paths:
       summary: Get account transaction history.
       tags:
       - transactions
-  /v1/api/accounts/authenticate:
-    post:
+  /v1/api/accounts/stats:
+    get:
       consumes:
       - application/json
-      description: Authenticate an account using email and password
-      parameters:
-      - description: authenticate account params
-        in: body
-        name: account
-        required: true
-        schema:
-          $ref: '#/definitions/account.AuthenticateAccountParams'
+      description: Get accounts stats - admin only endpoint.
       produces:
       - application/json
       responses:
@@ -462,7 +633,9 @@ paths:
             - $ref: '#/definitions/api.SuccessResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/account.AccessToken'
+                  items:
+                    $ref: '#/definitions/models.GetAccountStatsRow'
+                  type: array
               type: object
         "400":
           description: Bad Request
@@ -476,7 +649,46 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.ErrorResponse'
-      summary: Authenticate account
+      summary: Get accounts stats
+      tags:
+      - accounts
+  /v1/api/admin/users:
+    post:
+      consumes:
+      - application/json
+      description: Create a new ADMIN user. caller MUST be an admin
+      parameters:
+      - description: Create users params
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/account.CreateUserParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/account.CreateUserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Create user
       tags:
       - accounts
   /v1/api/credit:
@@ -780,6 +992,84 @@ paths:
       summary: Transfer from one account to account.
       tags:
       - transactions
+  /v1/api/users:
+    post:
+      consumes:
+      - application/json
+      description: Create a new CUSTOMER user
+      parameters:
+      - description: Create users params
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/account.CreateUserParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/account.CreateUserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Create user
+      tags:
+      - accounts
+  /v1/api/users/authenticate:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate an account using email and password
+      parameters:
+      - description: authenticate account params
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/account.AuthenticateAccountParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/account.AccessToken'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Authenticate account
+      tags:
+      - accounts
 securityDefinitions:
   ApiKeyAuth:
     in: header
