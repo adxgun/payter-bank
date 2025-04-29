@@ -67,13 +67,15 @@ func main() {
 
 	transactionService := transaction.NewService(querier, auditLogService)
 	accountService := account.NewService(querier, auditLogService, transactionService, tokenGenerator)
-	interestService := interestrate.NewService(querier, auditLogService)
+	interestService := interestrate.NewService(querier, cfg.App, auditLogService)
+	auditLogQueryService := auditlog.NewQueryService(querier)
 
 	accountHandler := account.NewHandler(accountService)
 	transactionHandler := transaction.NewHandler(transactionService)
 	interestRateHandler := interestrate.NewHandler(interestService)
+	auditLogHandler := auditlog.NewHandler(auditLogQueryService)
 
-	srvHandler := server.New(cfg, querier, accountHandler, transactionHandler, interestRateHandler)
+	srvHandler := server.New(cfg, querier, accountHandler, transactionHandler, interestRateHandler, auditLogHandler)
 	routes, err := srvHandler.BuildRoutes()
 	if err != nil {
 		logger.Fatal(ctx, "Error building routes", zap.Error(err))

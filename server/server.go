@@ -4,12 +4,14 @@ import (
 	"context"
 	jwtmiddleware "github.com/auth0/go-jwt-middleware/v2"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"net/http"
 	_ "payter-bank/docs"
 	"payter-bank/features/account"
+	"payter-bank/features/auditlog"
 	"payter-bank/features/interestrate"
 	"payter-bank/features/transaction"
 	"payter-bank/internal/api"
@@ -22,13 +24,14 @@ type Server struct {
 	accountHandler      *account.Handler
 	transactionHandler  *transaction.Handler
 	interestRateHandler *interestrate.Handler
+	auditLogHandler     *auditlog.Handler
 	cfg                 config.Config
 	db                  models.Querier
 }
 
 func New(cfg config.Config, db models.Querier,
-	accountHandler *account.Handler, txHandler *transaction.Handler, interestRateHandler *interestrate.Handler) *Server {
-	return &Server{accountHandler: accountHandler, db: db, cfg: cfg, transactionHandler: txHandler, interestRateHandler: interestRateHandler}
+	accountHandler *account.Handler, txHandler *transaction.Handler, interestRateHandler *interestrate.Handler, auditLogHandler *auditlog.Handler) *Server {
+	return &Server{accountHandler: accountHandler, db: db, cfg: cfg, transactionHandler: txHandler, interestRateHandler: interestRateHandler, auditLogHandler: auditLogHandler}
 }
 
 func (s *Server) BuildRoutes() (*gin.Engine, error) {
@@ -40,25 +43,30 @@ func (s *Server) BuildRoutes() (*gin.Engine, error) {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+	r.Use(cors.New(s.corsConfig()))
 	if s.cfg.Server.EnableSwagger {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 
 	v1 := r.Group("/api/v1")
-	v1.POST("/accounts", api.Wrap(s.accountHandler.CreateAccountHandler))
-	v1.POST("/accounts/authenticate", api.Wrap(s.accountHandler.AuthenticateAccountHandler))
+	v1.POST("/users", api.Wrap(s.accountHandler.CreateUserHandler))
+	v1.POST("/users/authenticate", api.Wrap(s.accountHandler.AuthenticateAccountHandler))
 
 	authenticated := r.Group("/api/v1")
 	authenticated.Use(authMW, currentProfileMiddleWare(s.db))
+	authenticated.POST("/accounts", api.Wrap(s.accountHandler.CreateAccountHandler))
 	authenticated.GET("/me", api.Wrap(s.accountHandler.MeHandler))
 	authenticated.PATCH(
 		"/accounts/:id/suspend", ensureAdminMiddleware(), api.Wrap(s.accountHandler.SuspendAccountHandler))
 	authenticated.PATCH(
 		"/accounts/:id/activate", ensureAdminMiddleware(), api.Wrap(s.accountHandler.ActivateAccountHandler))
 	authenticated.PATCH(
-		"/accounts/:id/close", ensureAdminMiddleware(), api.Wrap(s.accountHandler.SuspendAccountHandler))
+		"/accounts/:id/close", ensureAdminMiddleware(), api.Wrap(s.accountHandler.CloseAccountHandler))
 	authenticated.GET(
 		"/accounts/:id/status-history", ensureAdminMiddleware(), api.Wrap(s.accountHandler.GetAccountStatusHistoryHandler))
+	authenticated.GET(
+		"/accounts/:id",
+		api.Wrap(s.accountHandler.GetAccountDetailsHandler))
 	authenticated.POST(
 		"/credit",
 		ensureAdminMiddleware(),
@@ -76,8 +84,9 @@ func (s *Server) BuildRoutes() (*gin.Engine, error) {
 	authenticated.POST(
 		"/transfer",
 		api.Wrap(s.transactionHandler.TransferFundsHandler))
-	adminOnly := authenticated.Group("/api/v1")
-	adminOnly.Use(ensureAdminMiddleware())
+
+	adminOnly := r.Group("/api/v1")
+	adminOnly.Use(authMW, currentProfileMiddleWare(s.db), ensureAdminMiddleware())
 	adminOnly.POST(
 		"/interest-rate",
 		api.Wrap(s.interestRateHandler.CreateInterestRateHandler))
@@ -90,6 +99,10 @@ func (s *Server) BuildRoutes() (*gin.Engine, error) {
 	adminOnly.GET(
 		"/interest-rate/current",
 		api.Wrap(s.interestRateHandler.GetCurrentRateHandler))
+	adminOnly.POST("/admin/users", api.Wrap(s.accountHandler.CreateAdminUserHandler))
+	adminOnly.GET("/accounts", api.Wrap(s.accountHandler.GetAllCurrentAccountsHandler))
+	adminOnly.GET("/accounts/stats", api.Wrap(s.accountHandler.GetAccountsStatsHandler))
+	adminOnly.GET("/accounts/:id/logs", api.Wrap(s.auditLogHandler.GetAccountAuditLogsHandler))
 
 	return r, nil
 }
@@ -129,4 +142,13 @@ func (s *Server) jwtMiddleware() (gin.HandlerFunc, error) {
 			ctx.Abort()
 		}
 	}, nil
+}
+
+func (s *Server) corsConfig() cors.Config {
+	cfg := cors.DefaultConfig()
+	cfg.AllowOrigins = []string{s.cfg.Server.CorsOrigin}
+	cfg.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
+	cfg.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	cfg.AllowCredentials = true
+	return cfg
 }
