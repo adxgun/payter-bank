@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/google/uuid"
 	"time"
 )
 
@@ -16,13 +17,15 @@ type ServerConfig struct {
 	Port            string        `env:"PORT, default=2025"`
 	EnableSwagger   bool          `env:"ENABLE_SWAGGER, default=true"`
 	ShutdownTimeout time.Duration `env:"SERVER_SHUTDOWN_TIMEOUT, default=5s"`
+	CorsOrigin      string        `env:"CORS_ORIGIN, default=http://localhost:5173"` // set to VITE default URL
 }
 
 type AppConfig struct {
-	AdminEmail       string `env:"ADMIN_EMAIL, default=admin@payterbank.app"`
-	AdminPassword    string `env:"ADMIN_PASSWORD, default=admin"`
-	Environment      string `env:"ENVIRONMENT, default=dev"`
-	QueueConcurrency int    `env:"QUEUE_CONCURRENCY, default=10"`
+	AdminEmail            string    `env:"ADMIN_EMAIL, default=admin@payterbank.app"`
+	AdminPassword         string    `env:"ADMIN_PASSWORD, default=admin"`
+	Environment           string    `env:"ENVIRONMENT, default=dev"`
+	QueueConcurrency      int       `env:"QUEUE_CONCURRENCY, default=10"`
+	InterestRateAccountID uuid.UUID `env:"INTEREST_RATE_ACCOUNT_ID, default=00000000-1111-1111-1111-000000000000"`
 }
 
 type JWTConfig struct {
