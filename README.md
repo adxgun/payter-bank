@@ -48,45 +48,13 @@ API documentation can be accessed via: https://localhost:2025/docs/index.html
 ## Implementation Notes
 
 ### Directory Structure
-.
-└── payter-bank/
-├── features/
-│   ├── account/
-│   │   └── api, service...
-│   ├── auditlog/
-│   │   └── api, service...
-│   ├── transaction/
-│   │   └── api, service...
-│   └── interestrate/
-│       └── api, service...
-├── internal/
-│   ├── database/
-│   │   ├── models/
-│   │   │   ├── models.db.go
-│   │   │   └── ....
-│   │   ├── queries/
-│   │   │   ├── users.sql
-│   │   │   └── ...
-│   │   └── db.go
-│   ├── api
-│   ├── auth
-│   ├── config
-│   ├── errors
-│   └── pkg/
-│       ├── generator/
-│       │   └── jwt...
-│       └── password/
-│           └── ...
-├── migrations/
-│   └── sql files...
-├── server/
-│   ├── cmd/
-│   │   └── main.go
-│   ├── server.go
-│   └── mw.go - middlewares
-├── Dockerfile
-├── Makefile
-└── docker-compose.yml
+
+### 📁 Interactive Code Directory (Tree Viewer)
+
+Explore the interactive file structure of this project:
+
+👉 [View Project Structure on tree.nathanfriend.com](https://tree.nathanfriend.com/?s=(%27opt9s!(%27fancy8~fullPath!false~trailingSlash8~rootDot8)~B(%27B%27payt4-bank3featuresFccount2Fuditlog20transact920int4estrate23int4
+
 # Project Structure Explanation
 
 ## `features/`
