@@ -49,6 +49,6 @@ FROM
     JOIN
     users u ON al.user_id = u.id
 WHERE
-    al.affected_account_id = 'dcb947af-84cd-4f53-a573-9bff39ba9eec'
+    al.affected_account_id = $1
 ORDER BY
     al.created_at DESC;
