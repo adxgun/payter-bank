@@ -183,3 +183,20 @@ func (q *Queries) SaveTransaction(ctx context.Context, arg SaveTransactionParams
 	)
 	return i, err
 }
+
+const updateBalance = `-- name: UpdateBalance :exec
+UPDATE accounts a
+    SET balance = (
+        SELECT
+            COALESCE(SUM(CASE WHEN t.to_account_id = a.id THEN t.amount ELSE 0 END), 0) -
+            COALESCE(SUM(CASE WHEN t.from_account_id = a.id THEN t.amount ELSE 0 END), 0)
+        FROM transactions t
+        WHERE t.from_account_id = a.id OR t.to_account_id = a.id
+    )
+WHERE a.id = $1
+`
+
+func (q *Queries) UpdateBalance(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateBalance, id)
+	return err
+}

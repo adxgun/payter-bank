@@ -12,9 +12,14 @@ import (
 
 type Querier interface {
 	GetAccountBalance(ctx context.Context, id uuid.UUID) (GetAccountBalanceRow, error)
+	GetAccountByCurrency(ctx context.Context, arg GetAccountByCurrencyParams) (Account, error)
 	GetAccountByID(ctx context.Context, id uuid.UUID) (GetAccountByIDRow, error)
+	GetAccountDetailsByID(ctx context.Context, id uuid.UUID) (GetAccountDetailsByIDRow, error)
+	GetAccountStats(ctx context.Context) (GetAccountStatsRow, error)
 	GetAccountStatusHistory(ctx context.Context, affectedAccountID uuid.NullUUID) ([]GetAccountStatusHistoryRow, error)
 	GetAllActiveAccounts(ctx context.Context) ([]GetAllActiveAccountsRow, error)
+	GetAllCurrentAccounts(ctx context.Context) ([]GetAllCurrentAccountsRow, error)
+	GetAuditLogsForAccount(ctx context.Context, affectedAccountID uuid.NullUUID) ([]GetAuditLogsForAccountRow, error)
 	GetInterestRates(ctx context.Context) ([]InterestRate, error)
 	GetProfileByUserID(ctx context.Context, id uuid.UUID) (GetProfileByUserIDRow, error)
 	GetTransactionByID(ctx context.Context, id uuid.UUID) (Transaction, error)
@@ -27,6 +32,7 @@ type Querier interface {
 	SaveTransaction(ctx context.Context, arg SaveTransactionParams) (Transaction, error)
 	SaveUser(ctx context.Context, arg SaveUserParams) (SaveUserRow, error)
 	UpdateAccountStatus(ctx context.Context, arg UpdateAccountStatusParams) error
+	UpdateBalance(ctx context.Context, id uuid.UUID) error
 	UpdateCalculationFrequency(ctx context.Context, arg UpdateCalculationFrequencyParams) error
 	UpdateRate(ctx context.Context, arg UpdateRateParams) error
 }

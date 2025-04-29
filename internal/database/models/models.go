@@ -186,15 +186,16 @@ func (ns NullUserType) Value() (driver.Value, error) {
 }
 
 type Account struct {
-	ID            uuid.UUID    `json:"id"`
-	UserID        uuid.UUID    `json:"user_id"`
-	AccountNumber string       `json:"account_number"`
-	AccountType   AccountType  `json:"account_type"`
-	Status        Status       `json:"status"`
-	Currency      Currency     `json:"currency"`
-	CreatedAt     sql.NullTime `json:"created_at"`
-	UpdatedAt     sql.NullTime `json:"updated_at"`
-	DeletedAt     sql.NullTime `json:"deleted_at"`
+	ID            uuid.UUID     `json:"id"`
+	UserID        uuid.UUID     `json:"user_id"`
+	AccountNumber string        `json:"account_number"`
+	AccountType   AccountType   `json:"account_type"`
+	Status        Status        `json:"status"`
+	Currency      Currency      `json:"currency"`
+	CreatedAt     sql.NullTime  `json:"created_at"`
+	UpdatedAt     sql.NullTime  `json:"updated_at"`
+	DeletedAt     sql.NullTime  `json:"deleted_at"`
+	Balance       sql.NullInt64 `json:"balance"`
 }
 
 type AuditLog struct {

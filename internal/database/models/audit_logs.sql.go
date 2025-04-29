@@ -76,6 +76,83 @@ func (q *Queries) GetAccountStatusHistory(ctx context.Context, affectedAccountID
 	return items, nil
 }
 
+const getAuditLogsForAccount = `-- name: GetAuditLogsForAccount :many
+SELECT
+    a.id AS account_id,
+    a.status AS current_status,
+    al.action AS action_code,
+    CASE al.action
+        WHEN 'create_account' THEN 'Created Account'
+        WHEN 'account_credit' THEN 'Credited Account'
+        WHEN 'account_debit' THEN 'Debited Account'
+        WHEN 'account_status_change' THEN COALESCE(al.metadata->>'new_status', '') || ' Account'
+        ELSE al.action -- Keep the original action if not one of the defined ones
+        END AS action,
+    COALESCE(al.metadata->>'old_status', '')::varchar AS old_status,
+    COALESCE(al.metadata->>'new_status', '')::varchar AS new_status,
+    COALESCE(al.metadata->>'currency', '')::varchar AS currency,
+    CAST(COALESCE(al.metadata->>'amount', '0') AS BIGINT) AS amount,
+    u.first_name || ' ' || u.last_name AS action_by,
+    al.created_at AS created_at
+FROM
+    audit_logs al
+    JOIN
+    accounts a ON al.affected_account_id = a.id
+    JOIN
+    users u ON al.user_id = u.id
+WHERE
+    al.affected_account_id = $1
+ORDER BY
+    al.created_at DESC
+`
+
+type GetAuditLogsForAccountRow struct {
+	AccountID     uuid.UUID    `json:"account_id"`
+	CurrentStatus Status       `json:"current_status"`
+	ActionCode    string       `json:"action_code"`
+	Action        interface{}  `json:"action"`
+	OldStatus     string       `json:"old_status"`
+	NewStatus     string       `json:"new_status"`
+	Currency      string       `json:"currency"`
+	Amount        int64        `json:"amount"`
+	ActionBy      interface{}  `json:"action_by"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+}
+
+func (q *Queries) GetAuditLogsForAccount(ctx context.Context, affectedAccountID uuid.NullUUID) ([]GetAuditLogsForAccountRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAuditLogsForAccount, affectedAccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAuditLogsForAccountRow
+	for rows.Next() {
+		var i GetAuditLogsForAccountRow
+		if err := rows.Scan(
+			&i.AccountID,
+			&i.CurrentStatus,
+			&i.ActionCode,
+			&i.Action,
+			&i.OldStatus,
+			&i.NewStatus,
+			&i.Currency,
+			&i.Amount,
+			&i.ActionBy,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const saveAuditLog = `-- name: SaveAuditLog :exec
 INSERT INTO audit_logs(
     user_id, affected_account_id, action, metadata

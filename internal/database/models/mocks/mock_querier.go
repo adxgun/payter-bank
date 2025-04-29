@@ -57,6 +57,21 @@ func (mr *MockQuerierMockRecorder) GetAccountBalance(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountBalance", reflect.TypeOf((*MockQuerier)(nil).GetAccountBalance), ctx, id)
 }
 
+// GetAccountByCurrency mocks base method.
+func (m *MockQuerier) GetAccountByCurrency(ctx context.Context, arg models.GetAccountByCurrencyParams) (models.Account, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountByCurrency", ctx, arg)
+	ret0, _ := ret[0].(models.Account)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountByCurrency indicates an expected call of GetAccountByCurrency.
+func (mr *MockQuerierMockRecorder) GetAccountByCurrency(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountByCurrency", reflect.TypeOf((*MockQuerier)(nil).GetAccountByCurrency), ctx, arg)
+}
+
 // GetAccountByID mocks base method.
 func (m *MockQuerier) GetAccountByID(ctx context.Context, id uuid.UUID) (models.GetAccountByIDRow, error) {
 	m.ctrl.T.Helper()
@@ -70,6 +85,36 @@ func (m *MockQuerier) GetAccountByID(ctx context.Context, id uuid.UUID) (models.
 func (mr *MockQuerierMockRecorder) GetAccountByID(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountByID", reflect.TypeOf((*MockQuerier)(nil).GetAccountByID), ctx, id)
+}
+
+// GetAccountDetailsByID mocks base method.
+func (m *MockQuerier) GetAccountDetailsByID(ctx context.Context, id uuid.UUID) (models.GetAccountDetailsByIDRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountDetailsByID", ctx, id)
+	ret0, _ := ret[0].(models.GetAccountDetailsByIDRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountDetailsByID indicates an expected call of GetAccountDetailsByID.
+func (mr *MockQuerierMockRecorder) GetAccountDetailsByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountDetailsByID", reflect.TypeOf((*MockQuerier)(nil).GetAccountDetailsByID), ctx, id)
+}
+
+// GetAccountStats mocks base method.
+func (m *MockQuerier) GetAccountStats(ctx context.Context) (models.GetAccountStatsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountStats", ctx)
+	ret0, _ := ret[0].(models.GetAccountStatsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountStats indicates an expected call of GetAccountStats.
+func (mr *MockQuerierMockRecorder) GetAccountStats(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountStats", reflect.TypeOf((*MockQuerier)(nil).GetAccountStats), ctx)
 }
 
 // GetAccountStatusHistory mocks base method.
@@ -100,6 +145,36 @@ func (m *MockQuerier) GetAllActiveAccounts(ctx context.Context) ([]models.GetAll
 func (mr *MockQuerierMockRecorder) GetAllActiveAccounts(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllActiveAccounts", reflect.TypeOf((*MockQuerier)(nil).GetAllActiveAccounts), ctx)
+}
+
+// GetAllCurrentAccounts mocks base method.
+func (m *MockQuerier) GetAllCurrentAccounts(ctx context.Context) ([]models.GetAllCurrentAccountsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllCurrentAccounts", ctx)
+	ret0, _ := ret[0].([]models.GetAllCurrentAccountsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllCurrentAccounts indicates an expected call of GetAllCurrentAccounts.
+func (mr *MockQuerierMockRecorder) GetAllCurrentAccounts(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllCurrentAccounts", reflect.TypeOf((*MockQuerier)(nil).GetAllCurrentAccounts), ctx)
+}
+
+// GetAuditLogsForAccount mocks base method.
+func (m *MockQuerier) GetAuditLogsForAccount(ctx context.Context, affectedAccountID uuid.NullUUID) ([]models.GetAuditLogsForAccountRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAuditLogsForAccount", ctx, affectedAccountID)
+	ret0, _ := ret[0].([]models.GetAuditLogsForAccountRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAuditLogsForAccount indicates an expected call of GetAuditLogsForAccount.
+func (mr *MockQuerierMockRecorder) GetAuditLogsForAccount(ctx, affectedAccountID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuditLogsForAccount", reflect.TypeOf((*MockQuerier)(nil).GetAuditLogsForAccount), ctx, affectedAccountID)
 }
 
 // GetInterestRates mocks base method.
@@ -278,6 +353,20 @@ func (m *MockQuerier) UpdateAccountStatus(ctx context.Context, arg models.Update
 func (mr *MockQuerierMockRecorder) UpdateAccountStatus(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccountStatus", reflect.TypeOf((*MockQuerier)(nil).UpdateAccountStatus), ctx, arg)
+}
+
+// UpdateBalance mocks base method.
+func (m *MockQuerier) UpdateBalance(ctx context.Context, id uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateBalance", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateBalance indicates an expected call of UpdateBalance.
+func (mr *MockQuerierMockRecorder) UpdateBalance(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBalance", reflect.TypeOf((*MockQuerier)(nil).UpdateBalance), ctx, id)
 }
 
 // UpdateCalculationFrequency mocks base method.
