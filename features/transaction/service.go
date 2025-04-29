@@ -95,6 +95,9 @@ func (t *transactionService) CreditAccount(ctx context.Context, req AccountTrans
 		return nil, platformerrors.ErrInternal
 	}
 
+	t.updateBalance(ctx, fromAccount.ID)
+	t.updateBalance(ctx, toAccount.ID)
+
 	auditEvent := auditlog.NewEvent(auditlog.ActionAccountCredit, req.UserID, toAccount.ID, transaction)
 	err = t.auditLog.Submit(ctx, auditEvent)
 	if err != nil {
@@ -164,6 +167,9 @@ func (t *transactionService) DebitAccount(ctx context.Context, req AccountTransa
 		return nil, platformerrors.ErrInternal
 	}
 
+	t.updateBalance(ctx, fromAccount.ID)
+	t.updateBalance(ctx, toAccount.ID)
+
 	auditEvent := auditlog.NewEvent(auditlog.ActionAccountDebit, req.UserID, fromAccount.ID, transaction)
 	err = t.auditLog.Submit(ctx, auditEvent)
 	if err != nil {
@@ -207,4 +213,11 @@ func (t *transactionService) GetAccountBalance(ctx context.Context, accountID uu
 	}
 
 	return BalanceFromQueryResult(bal), nil
+}
+
+func (t *transactionService) updateBalance(ctx context.Context, accountID uuid.UUID) {
+	err := t.db.UpdateBalance(ctx, accountID)
+	if err != nil {
+		logger.Error(ctx, "failed to update account balance", zap.Error(err))
+	}
 }

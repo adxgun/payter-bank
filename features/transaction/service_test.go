@@ -90,6 +90,13 @@ func TestService_CreditAccount(t *testing.T) {
 			SaveTransaction(gomock.Any(), expectedSaveTxParams).
 			Return(expectedTx, nil)
 
+		m.db.EXPECT().
+			UpdateBalance(gomock.Any(), req.FromAccountID).
+			Return(nil)
+		m.db.EXPECT().
+			UpdateBalance(gomock.Any(), req.ToAccountID).
+			Return(nil)
+
 		m.auditLog.EXPECT().
 			Submit(gomock.Any(), expectedAuditLogEvent).
 			Return(nil)
@@ -231,6 +238,14 @@ func TestService_DebitAccount(t *testing.T) {
 		m.db.EXPECT().
 			SaveTransaction(gomock.Any(), expectedSaveTxParams).
 			Return(expectedTx, nil)
+
+		m.db.EXPECT().
+			UpdateBalance(gomock.Any(), req.FromAccountID).
+			Return(nil)
+
+		m.db.EXPECT().
+			UpdateBalance(gomock.Any(), req.ToAccountID).
+			Return(nil)
 
 		m.auditLog.EXPECT().
 			Submit(gomock.Any(), expectedAuditLogEvent).
