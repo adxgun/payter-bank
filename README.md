@@ -46,3 +46,78 @@ There are more functionalities supported by the API e.g `interest rates` but not
 API documentation can be accessed via: https://localhost:2025/docs/index.html
 
 ## Implementation Notes
+
+### Directory Structure
+.
+└── payter-bank/
+├── features/
+│   ├── account/
+│   │   └── api, service...
+│   ├── auditlog/
+│   │   └── api, service...
+│   ├── transaction/
+│   │   └── api, service...
+│   └── interestrate/
+│       └── api, service...
+├── internal/
+│   ├── database/
+│   │   ├── models/
+│   │   │   ├── models.db.go
+│   │   │   └── ....
+│   │   ├── queries/
+│   │   │   ├── users.sql
+│   │   │   └── ...
+│   │   └── db.go
+│   ├── api
+│   ├── auth
+│   ├── config
+│   ├── errors
+│   └── pkg/
+│       ├── generator/
+│       │   └── jwt...
+│       └── password/
+│           └── ...
+├── migrations/
+│   └── sql files...
+├── server/
+│   ├── cmd/
+│   │   └── main.go
+│   ├── server.go
+│   └── mw.go - middlewares
+├── Dockerfile
+├── Makefile
+└── docker-compose.yml
+# Project Structure Explanation
+
+## `features/`
+Hosts the core application logic, organized by domain (e.g., `account`). Each feature package typically includes:
+
+- `api.go` – Defines HTTP handlers for that domain.
+- `service.go` – Contains business logic and service layer operations.
+
+---
+
+## `internal/`
+Contains shared internal packages that support the feature modules. These are foundational components such as:
+
+- Database connections
+- Token generation utilities
+- Configuration management
+
+> These packages are meant to be used only within the application and not exposed externally.
+
+---
+
+## `migrations/`
+Stores all the SQL migration files. The application uses an automatic migration process to apply these schema changes to the database on startup.
+
+---
+
+## `server/`
+Acts as the entry point and orchestration layer for the backend. Responsibilities include:
+
+- Bootstrapping the server
+- Registering routes and handlers
+- Setting up authentication middleware
+- Wiring services to HTTP endpoints
+- Handling graceful shutdowns and application lifecycle management
