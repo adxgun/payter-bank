@@ -17,6 +17,68 @@ func NewHandler(service Service) *Handler {
 	}
 }
 
+// CreateUserHandler godoc
+// @Summary      Create user
+// @Description  Create a new CUSTOMER user
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Param        account  body  CreateUserParams  true  "Create users params"
+// @Success      200  {object}  api.SuccessResponse{data=CreateUserResponse}
+// @Failure      400  {object}  api.ErrorResponse
+// @Failure      404  {object}  api.ErrorResponse
+// @Failure      500  {object}  api.ErrorResponse
+// @Router       /v1/api/users [post]
+func (h *Handler) CreateUserHandler(ctx *gin.Context) api.Response {
+	var params CreateUserParams
+	if err := ctx.ShouldBindJSON(&params); err != nil {
+		return api.BadRequest(err.Error())
+	}
+
+	params.UserType = "CUSTOMER"
+	user, err := h.service.CreateUser(ctx, params)
+	if err != nil {
+		return api.Error(err)
+	}
+
+	return api.OK("user created successfully", user)
+}
+
+// CreateAdminUserHandler godoc
+// @Summary      Create user
+// @Description  Create a new ADMIN user. caller MUST be an admin
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Param        account  body  CreateUserParams  true  "Create users params"
+// @Success      200  {object}  api.SuccessResponse{data=CreateUserResponse}
+// @Failure      400  {object}  api.ErrorResponse
+// @Failure      404  {object}  api.ErrorResponse
+// @Failure      500  {object}  api.ErrorResponse
+// @Router       /v1/api/admin/users [post]
+func (h *Handler) CreateAdminUserHandler(ctx *gin.Context) api.Response {
+	var params CreateUserParams
+	if err := ctx.ShouldBindJSON(&params); err != nil {
+		return api.BadRequest(err.Error())
+	}
+
+	profile, err := auth.GetCurrentProfile(ctx)
+	if err != nil {
+		return api.Unauthorized("unauthorized")
+	}
+
+	if profile.UserType != "ADMIN" {
+		return api.Forbidden("only admin can create admin users")
+	}
+
+	user, err := h.service.CreateUser(ctx, params)
+	if err != nil {
+		return api.Error(err)
+	}
+
+	return api.OK("user created successfully", user)
+}
+
 // CreateAccountHandler godoc
 // @Summary      Create account
 // @Description  Create a new CUSTOMER or ADMIN account
@@ -54,7 +116,7 @@ func (h *Handler) CreateAccountHandler(ctx *gin.Context) api.Response {
 // @Failure      400  {object}  api.ErrorResponse
 // @Failure      404  {object}  api.ErrorResponse
 // @Failure      500  {object}  api.ErrorResponse
-// @Router       /v1/api/accounts/authenticate [post]
+// @Router       /v1/api/users/authenticate [post]
 func (h *Handler) AuthenticateAccountHandler(ctx *gin.Context) api.Response {
 	var params AuthenticateAccountParams
 	if err := ctx.ShouldBindJSON(&params); err != nil {
@@ -216,4 +278,69 @@ func (h *Handler) GetAccountStatusHistoryHandler(ctx *gin.Context) api.Response 
 	}
 
 	return api.OK("account status history retrieved successfully", history)
+}
+
+// GetAllCurrentAccountsHandler doc
+// @Summary      Get all current accounts
+// @Description  Get all current accounts - admin only endpoint.
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  api.SuccessResponse{data=[]Account}
+// @Failure      400  {object}  api.ErrorResponse
+// @Failure      404  {object}  api.ErrorResponse
+// @Failure      500  {object}  api.ErrorResponse
+// @Router       /v1/api/accounts [get]
+func (h *Handler) GetAllCurrentAccountsHandler(ctx *gin.Context) api.Response {
+	data, err := h.service.GetAllAccounts(ctx)
+	if err != nil {
+		return api.Error(err)
+	}
+
+	return api.OK("accounts retrieved successfully", data)
+}
+
+// GetAccountsStatsHandler doc
+// @Summary      Get accounts stats
+// @Description  Get accounts stats - admin only endpoint.
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  api.SuccessResponse{data=[]models.GetAccountStatsRow}
+// @Failure      400  {object}  api.ErrorResponse
+// @Failure      404  {object}  api.ErrorResponse
+// @Failure      500  {object}  api.ErrorResponse
+// @Router       /v1/api/accounts/stats [get]
+func (h *Handler) GetAccountsStatsHandler(ctx *gin.Context) api.Response {
+	data, err := h.service.GetAccountsStats(ctx)
+	if err != nil {
+		return api.Error(err)
+	}
+
+	return api.OK("accounts stats retrieved successfully", data)
+}
+
+// GetAccountDetailsHandler godoc
+// @Summary      Get account details.
+// @Description  Get account details.
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  api.SuccessResponse{data=Account}
+// @Failure      400  {object}  api.ErrorResponse
+// @Failure      404  {object}  api.ErrorResponse
+// @Failure      500  {object}  api.ErrorResponse
+// @Router       /v1/api/accounts/:id [get]
+func (h *Handler) GetAccountDetailsHandler(ctx *gin.Context) api.Response {
+	accountID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		return api.BadRequest("account ID is required")
+	}
+
+	data, err := h.service.GetAccountDetails(ctx, accountID)
+	if err != nil {
+		return api.Error(err)
+	}
+
+	return api.OK("account details retrieved successfully", data)
 }

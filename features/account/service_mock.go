@@ -11,6 +11,7 @@ package account
 
 import (
 	context "context"
+	models "payter-bank/internal/database/models"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -99,6 +100,36 @@ func (mr *MockServiceMockRecorder) CreateAccount(ctx, param any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccount", reflect.TypeOf((*MockService)(nil).CreateAccount), ctx, param)
 }
 
+// CreateUser mocks base method.
+func (m *MockService) CreateUser(ctx context.Context, param CreateUserParams) (CreateUserResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUser", ctx, param)
+	ret0, _ := ret[0].(CreateUserResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateUser indicates an expected call of CreateUser.
+func (mr *MockServiceMockRecorder) CreateUser(ctx, param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockService)(nil).CreateUser), ctx, param)
+}
+
+// GetAccountDetails mocks base method.
+func (m *MockService) GetAccountDetails(ctx context.Context, id uuid.UUID) (Account, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountDetails", ctx, id)
+	ret0, _ := ret[0].(Account)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountDetails indicates an expected call of GetAccountDetails.
+func (mr *MockServiceMockRecorder) GetAccountDetails(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountDetails", reflect.TypeOf((*MockService)(nil).GetAccountDetails), ctx, id)
+}
+
 // GetAccountStatusHistory mocks base method.
 func (m *MockService) GetAccountStatusHistory(ctx context.Context, accountID uuid.UUID) ([]ChangeHistory, error) {
 	m.ctrl.T.Helper()
@@ -112,6 +143,36 @@ func (m *MockService) GetAccountStatusHistory(ctx context.Context, accountID uui
 func (mr *MockServiceMockRecorder) GetAccountStatusHistory(ctx, accountID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountStatusHistory", reflect.TypeOf((*MockService)(nil).GetAccountStatusHistory), ctx, accountID)
+}
+
+// GetAccountsStats mocks base method.
+func (m *MockService) GetAccountsStats(ctx context.Context) (models.GetAccountStatsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountsStats", ctx)
+	ret0, _ := ret[0].(models.GetAccountStatsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountsStats indicates an expected call of GetAccountsStats.
+func (mr *MockServiceMockRecorder) GetAccountsStats(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountsStats", reflect.TypeOf((*MockService)(nil).GetAccountsStats), ctx)
+}
+
+// GetAllAccounts mocks base method.
+func (m *MockService) GetAllAccounts(ctx context.Context) ([]Account, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllAccounts", ctx)
+	ret0, _ := ret[0].([]Account)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllAccounts indicates an expected call of GetAllAccounts.
+func (mr *MockServiceMockRecorder) GetAllAccounts(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllAccounts", reflect.TypeOf((*MockService)(nil).GetAllAccounts), ctx)
 }
 
 // GetProfile mocks base method.

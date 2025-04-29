@@ -18,6 +18,7 @@ import (
 
 type Service interface {
 	InitialiseAdmin(ctx context.Context, email, password string) error
+	CreateUser(ctx context.Context, param CreateUserParams) (CreateUserResponse, error)
 	CreateAccount(ctx context.Context, param CreateAccountParams) (Profile, error)
 	AuthenticateAccount(ctx context.Context, param AuthenticateAccountParams) (AccessToken, error)
 	GetProfile(ctx context.Context, userID uuid.UUID) (Profile, error)
@@ -25,6 +26,9 @@ type Service interface {
 	ActivateAccount(ctx context.Context, param OperationParams) error
 	CloseAccount(ctx context.Context, param OperationParams) error
 	GetAccountStatusHistory(ctx context.Context, accountID uuid.UUID) ([]ChangeHistory, error)
+	GetAllAccounts(ctx context.Context) ([]Account, error)
+	GetAccountsStats(ctx context.Context) (models.GetAccountStatsRow, error)
+	GetAccountDetails(ctx context.Context, id uuid.UUID) (Account, error)
 }
 
 type service struct {
@@ -91,20 +95,17 @@ func (s service) InitialiseAdmin(ctx context.Context, email, pwd string) error {
 	return nil
 }
 
-func (s service) CreateAccount(ctx context.Context, param CreateAccountParams) (Profile, error) {
-	ctx = logger.With(ctx,
-		zap.String(logger.FunctionName, "CreateAccount"),
-		zap.Any(logger.RequestFields, param))
+func (s service) CreateUser(ctx context.Context, param CreateUserParams) (CreateUserResponse, error) {
 	user, err := s.db.GetUserByEmail(ctx, param.Email)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			logger.Error(ctx, "failed to check if user exists", zap.Error(err))
-			return Profile{}, platformerrors.ErrInternal
+			return CreateUserResponse{}, platformerrors.ErrInternal
 		}
 	}
 
 	if user.Email != "" {
-		return Profile{}, platformerrors.MakeApiError(400, "user already exists")
+		return CreateUserResponse{}, platformerrors.MakeApiError(400, "user already exists")
 	}
 
 	newUser, err := s.db.SaveUser(ctx, models.SaveUserParams{
@@ -116,11 +117,44 @@ func (s service) CreateAccount(ctx context.Context, param CreateAccountParams) (
 	})
 	if err != nil {
 		logger.Error(ctx, "failed to save user", zap.Error(err))
+		return CreateUserResponse{}, platformerrors.ErrInternal
+	}
+	return CreateUserResponse{
+		UserID: newUser.ID,
+	}, nil
+}
+
+func (s service) CreateAccount(ctx context.Context, param CreateAccountParams) (Profile, error) {
+	ctx = logger.With(ctx,
+		zap.String(logger.FunctionName, "CreateAccount"),
+		zap.Any(logger.RequestFields, param))
+
+	user, err := s.db.GetUserByID(ctx, param.UserID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Profile{}, platformerrors.MakeApiError(404, "user not found")
+		}
+		logger.Error(ctx, "failed to get user by id", zap.Error(err))
 		return Profile{}, platformerrors.ErrInternal
 	}
 
+	existingAccount, err := s.db.GetAccountByCurrency(ctx, models.GetAccountByCurrencyParams{
+		Currency: models.Currency(param.Currency),
+		UserID:   param.UserID,
+	})
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			logger.Error(ctx, "failed to get account by currency", zap.Error(err))
+			return Profile{}, platformerrors.ErrInternal
+		}
+	}
+
+	if existingAccount.ID != uuid.Nil {
+		return Profile{}, platformerrors.MakeApiError(400, "account already exists")
+	}
+
 	account := models.SaveAccountParams{
-		UserID:        newUser.ID,
+		UserID:        user.ID,
 		AccountType:   models.AccountTypeCURRENT,
 		Status:        models.StatusACTIVE,
 		AccountNumber: generator.DefaultNumberGenerator.Generate(),
@@ -133,7 +167,7 @@ func (s service) CreateAccount(ctx context.Context, param CreateAccountParams) (
 		return Profile{}, platformerrors.ErrInternal
 	}
 
-	err = s.auditLog.Submit(ctx, auditlog.NewEvent(auditlog.ActionCreateAccount, newUser.ID, newAccount.ID, param))
+	err = s.auditLog.Submit(ctx, auditlog.NewEvent(auditlog.ActionCreateAccount, param.AdminUserID, newAccount.ID, param))
 	if err != nil {
 		logger.Error(ctx, "failed to queue audit log", zap.Error(err))
 	}
@@ -153,7 +187,7 @@ func (s service) CreateAccount(ctx context.Context, param CreateAccountParams) (
 		}
 	}
 
-	p, err := s.db.GetProfileByUserID(ctx, newUser.ID)
+	p, err := s.db.GetProfileByUserID(ctx, user.ID)
 	if err != nil {
 		logger.Error(ctx, "failed to get profile by user id", zap.Error(err))
 		return Profile{}, platformerrors.ErrInternal
@@ -350,4 +384,35 @@ func (s service) GetAccountStatusHistory(ctx context.Context, accountID uuid.UUI
 		items = append(items, ChangeHistoryFromRow(row))
 	}
 	return items, nil
+}
+
+func (s service) GetAllAccounts(ctx context.Context) ([]Account, error) {
+	data, err := s.db.GetAllCurrentAccounts(ctx)
+	if err != nil {
+		logger.Error(ctx, "failed to get all accounts", zap.Error(err))
+		return nil, platformerrors.ErrInternal
+	}
+
+	accounts := make([]Account, 0, len(data))
+	for _, row := range data {
+		accounts = append(accounts, AccountFromQuery(row))
+	}
+
+	return accounts, nil
+}
+
+func (s service) GetAccountsStats(ctx context.Context) (models.GetAccountStatsRow, error) {
+	return s.db.GetAccountStats(ctx)
+}
+
+func (s service) GetAccountDetails(ctx context.Context, id uuid.UUID) (Account, error) {
+	row, err := s.db.GetAccountDetailsByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Account{}, platformerrors.MakeApiError(404, "account not found")
+		}
+		logger.Error(ctx, "failed to get account details", zap.Error(err))
+		return Account{}, platformerrors.ErrInternal
+	}
+	return AccountFromDetailsRow(row), nil
 }

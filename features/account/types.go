@@ -35,15 +35,23 @@ type AuthenticateAccountParams struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type CreateUserParams struct {
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
+	Email     string `json:"email" binding:"required,email"`
+	Password  string `json:"password" binding:"required"`
+	UserType  string `json:"user_type" binding:"required,oneof=CUSTOMER ADMIN"`
+}
+
+type CreateUserResponse struct {
+	UserID uuid.UUID `json:"user_id"`
+}
+
 type CreateAccountParams struct {
-	FirstName      string  `json:"first_name" binding:"required"`
-	LastName       string  `json:"last_name" binding:"required"`
-	Email          string  `json:"email" binding:"required,email"`
-	Password       string  `json:"password" binding:"required"`
-	Currency       string  `json:"currency" binding:"required,oneof=GBP EUR JPY"`
-	UserType       string  `json:"user_type" binding:"required,oneof=CUSTOMER ADMIN"`
-	InitialDeposit float64 `json:"initial_deposit"`
-	UserID         uuid.UUID
+	Currency       string    `json:"currency" binding:"required,oneof=GBP EUR JPY"`
+	InitialDeposit float64   `json:"initial_deposit"`
+	UserID         uuid.UUID `json:"user_id" binding:"required"`
+	AdminUserID    uuid.UUID
 }
 
 type OperationParams struct {
@@ -74,5 +82,59 @@ func ChangeHistoryFromRow(row models.GetAccountStatusHistoryRow) ChangeHistory {
 		NewStatus:     row.NewStatus,
 		ActionBy:      row.ActionBy.(string),
 		CreatedAt:     row.CreatedAt.Time,
+	}
+}
+
+type Amount struct {
+	Amount   float64 `json:"amount"`
+	Currency string  `json:"currency"`
+}
+
+type Account struct {
+	UserID        uuid.UUID `json:"user_id"`
+	AccountID     uuid.UUID `json:"account_id"`
+	AccountNumber string    `json:"account_number"`
+	AccountType   string    `json:"account_type"`
+	Currency      string    `json:"currency"`
+	Balance       Amount    `json:"balance"`
+	Status        string    `json:"status"`
+	CreatedAt     time.Time `json:"created_at"`
+	FirstName     string    `json:"first_name"`
+	LastName      string    `json:"last_name"`
+}
+
+func AccountFromQuery(row models.GetAllCurrentAccountsRow) Account {
+	return Account{
+		UserID:        row.UserID,
+		AccountID:     row.AccountID,
+		AccountNumber: row.AccountNumber,
+		AccountType:   string(row.AccountType),
+		Currency:      string(row.Status),
+		Balance: Amount{
+			Amount:   float64(row.Balance.Int64) / 100,
+			Currency: string(row.Currency),
+		},
+		Status:    string(row.Status),
+		CreatedAt: row.CreatedAt.Time,
+		FirstName: row.FirstName,
+		LastName:  row.LastName,
+	}
+}
+
+func AccountFromDetailsRow(row models.GetAccountDetailsByIDRow) Account {
+	return Account{
+		UserID:        row.UserID,
+		AccountID:     row.AccountID,
+		AccountNumber: row.AccountNumber,
+		AccountType:   string(row.AccountType),
+		Currency:      string(row.Currency),
+		Balance: Amount{
+			Amount:   float64(row.Balance.Int64) / 100,
+			Currency: string(row.Currency),
+		},
+		FirstName: row.FirstName,
+		LastName:  row.LastName,
+		Status:    string(row.Status),
+		CreatedAt: row.CreatedAt.Time,
 	}
 }

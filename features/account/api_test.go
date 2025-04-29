@@ -22,13 +22,10 @@ func TestHandler_CreateAccountHandler(t *testing.T) {
 
 	t.Run("successfully create a new account", func(t *testing.T) {
 		mockService := NewMockService(gomock.NewController(t))
+		userID := uuid.MustParse("12345678-1234-1234-1234-123456789012")
 		expectedParam := CreateAccountParams{
-			FirstName: "John",
-			LastName:  "Doe",
-			Email:     "jd@testmail.com",
-			Password:  "$password001",
-			Currency:  "GBP",
-			UserType:  "ADMIN",
+			Currency: "GBP",
+			UserID:   userID,
 		}
 		expectedProfile := Profile{AccountID: uuid.New()}
 		expectedResponse := api.SuccessResponse{
@@ -36,7 +33,7 @@ func TestHandler_CreateAccountHandler(t *testing.T) {
 			Message: "account created successfully",
 		}
 
-		body := `{"first_name":"John", "last_name": "Doe", "email": "jd@testmail.com", "password": "$password001", "currency": "GBP", "user_type": "ADMIN"}`
+		body := `{"currency":"GBP", "user_id": "12345678-1234-1234-1234-123456789012"}`
 		mockService.EXPECT().CreateAccount(gomock.Any(), expectedParam).
 			Return(expectedProfile, nil)
 
@@ -50,10 +47,10 @@ func TestHandler_CreateAccountHandler(t *testing.T) {
 		assert.Equal(t, resp.Data, expectedResponse)
 	})
 
-	t.Run("failed to create account - missing first_name and last_name", func(t *testing.T) {
+	t.Run("failed to create account - missing user_id", func(t *testing.T) {
 		mockService := NewMockService(gomock.NewController(t))
 
-		body := `{"first_name":"", "last_name": "", "email": "jd@testmail.com", "password": "$password001", "currency": "GBP", "user_type": "ADMIN"}`
+		body := `{"currency":"GBP"}`
 		handler := NewHandler(mockService)
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -66,16 +63,14 @@ func TestHandler_CreateAccountHandler(t *testing.T) {
 
 	t.Run("failed to create account - internal platform error", func(t *testing.T) {
 		mockService := NewMockService(gomock.NewController(t))
+		userID := uuid.MustParse("12345678-1234-1234-1234-123456789012")
 		expectedParam := CreateAccountParams{
-			FirstName: "John",
-			LastName:  "Doe",
-			Email:     "jd@testmail.com",
-			Password:  "$password001",
-			Currency:  "GBP",
-			UserType:  "ADMIN",
+			Currency:       "GBP",
+			InitialDeposit: 100,
+			UserID:         userID,
 		}
 
-		body := `{"first_name":"John", "last_name": "Doe", "email": "jd@testmail.com", "password": "$password001", "currency": "GBP", "user_type": "ADMIN"}`
+		body := `{"currency":"GBP", "user_id": "12345678-1234-1234-1234-123456789012", "initial_deposit": 100}`
 		mockService.EXPECT().CreateAccount(gomock.Any(), expectedParam).
 			Return(Profile{}, platformerrors.ErrInternal)
 
@@ -90,16 +85,13 @@ func TestHandler_CreateAccountHandler(t *testing.T) {
 
 	t.Run("failed to create account - pre condition failure", func(t *testing.T) {
 		mockService := NewMockService(gomock.NewController(t))
+		userID := uuid.MustParse("12345678-1234-1234-1234-123456789012")
 		expectedParam := CreateAccountParams{
-			FirstName: "John",
-			LastName:  "Doe",
-			Email:     "jd@testmail.com",
-			Password:  "$password001",
-			Currency:  "GBP",
-			UserType:  "ADMIN",
+			Currency: "GBP",
+			UserID:   userID,
 		}
 
-		body := `{"first_name":"John", "last_name": "Doe", "email": "jd@testmail.com", "password": "$password001", "currency": "GBP", "user_type": "ADMIN"}`
+		body := `{"currency":"GBP", "user_id": "12345678-1234-1234-1234-123456789012"}`
 		mockService.EXPECT().CreateAccount(gomock.Any(), expectedParam).
 			Return(Profile{}, platformerrors.MakeApiError(http.StatusPreconditionFailed, "user already exists"))
 
