@@ -52,3 +52,47 @@ SELECT
 WHERE users.user_type='CUSTOMER'
     AND accounts.status = 'ACTIVE'
     AND accounts.account_type = 'CURRENT';
+
+-- name: GetAccountByCurrency :one
+SELECT * FROM accounts WHERE currency = $1 AND user_id = $2 LIMIT 1;
+
+-- name: GetAllCurrentAccounts :many
+SELECT
+    u.first_name,
+    u.last_name,
+    u.id AS user_id,
+    a.account_number,
+    a.id AS account_id,
+    a.balance,
+    a.account_type,
+    a.status,
+    a.currency,
+    a.created_at
+FROM accounts a
+         JOIN users u ON u.id = a.user_id
+WHERE a.account_type = 'CURRENT'
+ORDER BY a.created_at DESC;
+
+-- name: GetAccountStats :one
+SELECT
+    (SELECT COUNT(*) FROM users) as total_users,
+    COUNT(*) AS total,
+    COUNT(CASE WHEN status = 'CLOSED' THEN 1 END) AS closed,
+    COUNT(CASE WHEN status = 'SUSPENDED' THEN 1 END) AS suspended
+FROM accounts;
+
+-- name: GetAccountDetailsByID :one
+SELECT
+    users.id as user_id,
+    accounts.id as account_id,
+    users.first_name as first_name,
+    users.last_name as last_name,
+    account_number,
+    status,
+    account_type,
+    currency,
+    accounts.balance,
+    accounts.created_at
+FROM accounts
+         JOIN users ON users.id = accounts.user_id
+WHERE accounts.id = $1;

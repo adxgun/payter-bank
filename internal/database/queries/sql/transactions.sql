@@ -41,3 +41,14 @@ ORDER BY
 INSERT INTO transactions(
     from_account_id, to_account_id, amount, reference_number, description, status, currency
 ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+
+-- name: UpdateBalance :exec
+UPDATE accounts a
+    SET balance = (
+        SELECT
+            COALESCE(SUM(CASE WHEN t.to_account_id = a.id THEN t.amount ELSE 0 END), 0) -
+            COALESCE(SUM(CASE WHEN t.from_account_id = a.id THEN t.amount ELSE 0 END), 0)
+        FROM transactions t
+        WHERE t.from_account_id = a.id OR t.to_account_id = a.id
+    )
+WHERE a.id = $1;
