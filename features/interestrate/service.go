@@ -35,6 +35,8 @@ type Service interface {
 	Start(ctx context.Context) error
 }
 
+// Runner is responsible for starting/restarting the CRON job that calculates and applies interests
+// based on configuration
 type Runner interface {
 	Start(ctx context.Context) error
 }
