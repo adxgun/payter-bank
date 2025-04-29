@@ -44,7 +44,7 @@ I put together a basic admin frontend app that shows the basic capabilities of t
 There are more functionalities supported by the API e.g `interest rates` but not on the frontend. You can explore these other functionalities via API. API Documentation is available via Swagger.
 
 ## Swagger Documentation
-API documentation can be accessed via: https://localhost:2025/docs/index.html
+API documentation can be accessed via: http://localhost:2025/docs/index.html
 
 ## Implementation Notes
 
